@@ -40,6 +40,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(express.static(path.join(__dirname, "..", "public")));
 
+app.use(routes);
+
 app.get("/", (_req, res) => {
   res.sendFile(path.join(__dirname, "..", "public", "index.html"));
 });
@@ -50,7 +52,6 @@ app.get("/health", (_req, res) => {
     .json({ status: `${process.env.APPLICATION_NAME} service is up` });
 });
 
-app.use(routes);
 app.use(errorHandler);
 
 export default app;

@@ -1,218 +1,2134 @@
-openapi: 3.0.1
+openapi: 3.0.0
+
 info:
-  title: API Service
   version: 1.0.0
-  description: API Service endpoints
+  title: Sync-Workbench API
+  description: >-
+    Sync-Workbench is a powerful workforce management solution designed to streamline and optimize employee operations.
+    This API allows for managing employees, projects, tasks, performance, and more with role-based access control.
   contact:
-    email: sidhant@panda.fyi
-    name: Sidhant Panda
+    name: FS Army
+    url: https://fsarmy.com
+    email: support@fsarmy.com
+
 servers:
-  - url: "/"
+  - description: Development Server
+    url: http://localhost:4000/api/v1
+  - description: Production Server
+    url: https://sync-workbench-api.onrender.com/api/v1
+
 tags:
-  - name: book
-    description: Books APIs
+  - name: Auth
+    description: Authentication Endpoints (public)
+  - name: User
+    description: User Management Endpoints (admin)
+  - name: Permission
+    description: "Operations related to permissions"
+  - name: Role
+    description: "Operations related to roles"
+  - name: RolePermission
+    description: "Operations related to role permissions"
+  - name: Employee
+    description: Employee Management Endpoints (admin + HR)
+  - name: Department
+    description: Department Management Endpoints (admin)
+  - name: Project
+    description: Project Management Endpoints (admin + managers)
+  - name: Task
+    description: Task Management Endpoints (admin + managers)
+  - name: Attendance
+    description: Attendance Tracking Endpoints (HR + managers)
+  - name: Leave
+    description: Leave Management Endpoints (HR + employees)
+  - name: PerformanceReview
+    description: Performance Review Endpoints (HR + managers)
+  - name: Payroll
+    description: Payroll Management Endpoints (HR + finance)
+  - name: Document
+    description: Document Management Endpoints (HR + employees)
+  - name: Skill
+    description: Skill Management Endpoints (HR + managers)
+  - name: Certification
+    description: Certification Management Endpoints (HR + managers)
+  - name: Team
+    description: Team Management Endpoints (admin + managers)
+
 paths:
-  /book/add:
+  /auth/register:
     post:
-      tags:
-        - book
-      summary: Add a book to the database
-      operationId: book-add
+      summary: User Registration
+      description: Registers a new user account.
+      tags: [Auth]
       requestBody:
-        description: New user signing up
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/DraftBookSchema"
+              $ref: "#/components/schemas/User"
       responses:
-        "200":
-          description: Book was added
+        "201":
+          description: Registration successful
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BookSchema"
-        "400":
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BadRequestSchema"
-        "500":
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ServerErrorSchema"
-  /book/all:
-    get:
-      tags:
-        - book
-      summary: Get all books in database
-      operationId: book-get-all
-      responses:
-        "200":
-          description: Search results
-          content:
-            application/json:
-              schema:
+                type: object
                 properties:
-                  books:
+                  status:
+                    type: string
+                    example: success
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Login successful
+                  data:
+                    type: object
+                    properties:
+                      accessToken:
+                        type: string
+                        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                      refreshToken:
+                        type: string
+                        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        "400":
+          $ref: "#/components/responses/400"
+
+  /auth/login:
+    post:
+      summary: User Login
+      description: Authenticates the user and returns JWT and refresh token.
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: your-username
+                password:
+                  type: string
+                  example: yourPassword
+      responses:
+        "200":
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Login successful
+                  data:
+                    type: object
+                    properties:
+                      accessToken:
+                        type: string
+                        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                      refreshToken:
+                        type: string
+                        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        "401":
+          $ref: "#/components/responses/401"
+
+  /auth/refresh-token:
+    post:
+      summary: Refresh Access Token
+      description: Returns a new access token using the refresh token.
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+                  example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+      responses:
+        "200":
+          description: Successfully refreshed token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: Token refreshed successfully
+                  data:
+                    type: object
+                    properties:
+                      accessToken:
+                        type: string
+                        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        "401":
+          $ref: "#/components/responses/401"
+
+  /users:
+    get:
+      security:
+        - bearerAuth: []
+      summary: "Get a list of users"
+      description: "Retrieve a list of users with pagination, sorting, and populate options."
+      tags: [User]
+      parameters:
+        - $ref: "#/components/parameters/search"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/sort_by"
+        - $ref: "#/components/parameters/sort_type"
+        - $ref: "#/components/parameters/populate"
+        - $ref: "#/components/parameters/role"
+      responses:
+        "200":
+          description: "A list of users"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: "Successfully retrieved users."
+                  links:
+                    type: object
+                    additionalProperties: true
+                  pagination:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                        description: "Total number of users."
+                      page:
+                        type: integer
+                        description: "Current page number."
+                      limit:
+                        type: integer
+                        description: "Number of users per page."
+                  data:
                     type: array
                     items:
-                      $ref: "#/components/schemas/BookSchema"
+                      $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/400"
         "500":
-          description: Internal Server Error
+          $ref: "#/components/responses/500"
+    post:
+      security:
+        - bearerAuth: []
+      summary: "Create a new user"
+      description: "Add a new users to the system."
+      tags: ["User"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+      responses:
+        "201":
+          description: "Users created successfully."
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ServerErrorSchema"
-  /book/id/{bookId}:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  statusCode:
+                    type: integer
+                    example: 201
+                  message:
+                    type: string
+                    example: "User created successfully."
+                  links:
+                    type: object
+                    additionalProperties: true
+                  data:
+                    $ref: "#/components/schemas/User"
+
+        "400":
+          $ref: "#/components/responses/400"
+        "500":
+          $ref: "#/components/responses/500"
+
+  /users/{id}:
     get:
+      security:
+        - bearerAuth: []
+      summary: "Get user details"
+      description: "Retrieve detailed information for a specific user."
+      tags: [User]
       parameters:
-        - in: path
-          name: bookId
-          schema:
-            type: string
-          required: true
-          description: ID of book to retrieve
-      tags:
-        - book
-      summary: Retrieve a book by ID
-      operationId: book-get
+        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/populate"
       responses:
         "200":
-          description: Book details
+          description: "User details"
           content:
             application/json:
               schema:
+                type: object
                 properties:
-                  book:
-                    $ref: "#/components/schemas/BookSchema"
+                  status:
+                    type: string
+                    example: success
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: "User details retrieved successfully."
+                  links:
+                    type: object
+                    additionalProperties: true
+                  data:
+                    $ref: "#/components/schemas/User"
         "404":
-          description: Book not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NotFoundErrorSchema"
-    delete:
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+
+    put:
+      security:
+        - bearerAuth: []
+      summary: Create or update an user
+      tags: [User]
       parameters:
-        - in: path
-          name: bookId
-          schema:
-            type: string
-          required: true
-          description: ID of book to remove
-      tags:
-        - book
-      summary: Remove a book by ID
-      operationId: book-remove
+        - $ref: "#/components/parameters/id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+      responses:
+        "200":
+          description: User updated successfully
+        "400":
+          $ref: "#/components/responses/400"
+        "404":
+          $ref: "#/components/responses/404"
+
+    patch:
+      security:
+        - bearerAuth: []
+      summary: "Partially update user details"
+      tags: [User]
+      parameters:
+        - $ref: "#/components/parameters/id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+      responses:
+        "200":
+          description: User updated successfully
+        "400":
+          $ref: "#/components/responses/400"
+        "404":
+          $ref: "#/components/responses/404"
+
+    delete:
+      security:
+        - bearerAuth: []
+      summary: "Delete user"
+      tags: [User]
+      parameters:
+        - $ref: "#/components/parameters/id"
       responses:
         "204":
-          description: Book removed
+          description: User deleted successfully
         "404":
-          description: Book not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NotFoundErrorSchema"
-  /book/search:
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+
+  /permissions:
     get:
-      tags:
-        - book
-      summary: Search books by name or author
-      operationId: book-search
+      security:
+        - bearerAuth: []
+      summary: "Get a list of permissions"
+      tags: [Permission]
       parameters:
-        - in: query
-          name: name
-          schema:
-            type: string
-            default: hitchhiker
-          description: String containing full name or partial name of the book
-        - in: query
-          name: author
-          schema:
-            type: string
-            default: douglas
-          description: String containing full name or partial name of the author
+        - $ref: "#/components/parameters/search"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/sort_by"
+        - $ref: "#/components/parameters/sort_type"
       responses:
         "200":
-          description: Search results
+          description: "A list of permissions"
           content:
             application/json:
               schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Permission"
+        "500":
+          $ref: "#/components/responses/500"
+    post:
+      security:
+        - bearerAuth: []
+      summary: "Create a new permission"
+      tags: [Permission]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Permission"
+      responses:
+        "201":
+          description: "Permission created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Permission"
+        "400":
+          $ref: "#/components/responses/400"
+        "500":
+          $ref: "#/components/responses/500"
+
+  /permissions/{id}:
+    get:
+      security:
+        - bearerAuth: []
+      summary: "Get permission details"
+      tags: [Permission]
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "200":
+          description: "Permission details"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Permission"
+        "404":
+          $ref: "#/components/responses/404"
+    put:
+      security:
+        - bearerAuth: []
+      summary: "Update permission details"
+      tags: [Permission]
+      parameters:
+        - $ref: "#/components/parameters/id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Permission"
+      responses:
+        "200":
+          description: "Permission updated successfully."
+        "404":
+          $ref: "#/components/responses/404"
+    patch:
+      security:
+        - bearerAuth: []
+      summary: "Partially update permission details"
+      tags: [Permission]
+      parameters:
+        - $ref: "#/components/parameters/id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Permission"
+      responses:
+        "200":
+          description: "Permission partially updated successfully."
+        "404":
+          $ref: "#/components/responses/404"
+    delete:
+      security:
+        - bearerAuth: []
+      summary: "Delete permission"
+      tags: [Permission]
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "204":
+          description: "Permission deleted successfully."
+        "404":
+          $ref: "#/components/responses/404"
+
+  /roles:
+    get:
+      security:
+        - bearerAuth: []
+      summary: "Get a list of roles"
+      tags: [Role]
+      parameters:
+        - $ref: "#/components/parameters/search"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/sort_by"
+        - $ref: "#/components/parameters/sort_type"
+      responses:
+        "200":
+          description: "A list of roles"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Role"
+        "500":
+          $ref: "#/components/responses/500"
+    post:
+      security:
+        - bearerAuth: []
+      summary: "Create a new role"
+      tags: [Role]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Role"
+      responses:
+        "201":
+          description: "Role created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Role"
+        "400":
+          $ref: "#/components/responses/400"
+        "500":
+          $ref: "#/components/responses/500"
+
+  /roles/{id}:
+    get:
+      security:
+        - bearerAuth: []
+      summary: "Get role details"
+      tags: [Role]
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "200":
+          description: "Role details"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Role"
+        "404":
+          $ref: "#/components/responses/404"
+    put:
+      security:
+        - bearerAuth: []
+      summary: "Update role details"
+      tags: [Role]
+      parameters:
+        - $ref: "#/components/parameters/id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Role"
+      responses:
+        "200":
+          description: "Role updated successfully."
+        "404":
+          $ref: "#/components/responses/404"
+    patch:
+      security:
+        - bearerAuth: []
+      summary: "Partially update role details"
+      tags: [Role]
+      parameters:
+        - $ref: "#/components/parameters/id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Role"
+      responses:
+        "200":
+          description: "Role partially updated successfully."
+        "404":
+          $ref: "#/components/responses/404"
+    delete:
+      security:
+        - bearerAuth: []
+      summary: "Delete role"
+      tags: [Role]
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "204":
+          description: "Role deleted successfully."
+        "404":
+          $ref: "#/components/responses/404"
+
+  /role-permissions:
+    get:
+      security:
+        - bearerAuth: []
+      summary: "Get a list of role permissions"
+      tags: [RolePermission]
+      parameters:
+        - $ref: "#/components/parameters/search"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/sort_by"
+        - $ref: "#/components/parameters/sort_type"
+        - $ref: "#/components/parameters/populate"
+      responses:
+        "200":
+          description: "A list of role permissions"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RolePermission"
+        "500":
+          $ref: "#/components/responses/500"
+    post:
+      security:
+        - bearerAuth: []
+      summary: "Create a new role permission"
+      tags: [RolePermission]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RolePermission"
+      responses:
+        "201":
+          description: "RolePermission created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RolePermission"
+        "400":
+          $ref: "#/components/responses/400"
+        "500":
+          $ref: "#/components/responses/500"
+
+  /role-permissions/{id}:
+    get:
+      security:
+        - bearerAuth: []
+      summary: "Get role permission details"
+      tags: [RolePermission]
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "200":
+          description: "Role permission details"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RolePermission"
+        "404":
+          $ref: "#/components/responses/404"
+    patch:
+      security:
+        - bearerAuth: []
+      summary: "Partially update role permission"
+      tags: [RolePermission]
+      parameters:
+        - $ref: "#/components/parameters/id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RolePermission"
+      responses:
+        "200":
+          description: "RolePermission partially updated successfully."
+        "404":
+          $ref: "#/components/responses/404"
+    delete:
+      security:
+        - bearerAuth: []
+      summary: "Delete role permission"
+      tags: [RolePermission]
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "204":
+          description: "Role permission deleted successfully."
+        "404":
+          $ref: "#/components/responses/404"
+
+  /employees:
+    get:
+      security:
+        - bearerAuth: []
+      summary: "Get a list of employees"
+      description: "Retrieve a list of employees with pagination, sorting, and populate options."
+      tags: [Employee]
+      parameters:
+        - $ref: "#/components/parameters/search"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/sort_by"
+        - $ref: "#/components/parameters/sort_type"
+        - $ref: "#/components/parameters/populate"
+      responses:
+        "200":
+          description: "A list of employees"
+          content:
+            application/json:
+              schema:
+                type: "object"
                 properties:
-                  books:
+                  status:
+                    type: string
+                    example: success
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: "Successfully retrieved employees."
+                  links:
+                    type: object
+                    additionalProperties: true
+                  pagination:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                        description: "Total number of employees."
+                      page:
+                        type: integer
+                        description: "Current page number."
+                      limit:
+                        type: integer
+                        description: "Number of employees per page."
+                  data:
                     type: array
                     items:
-                      $ref: "#/components/schemas/BookSchema"
+                      $ref: "#/components/schemas/Employee"
+        "400":
+          $ref: "#/components/responses/400"
         "500":
-          description: Internal Server Error
+          $ref: "#/components/responses/500"
+    post:
+      security:
+        - bearerAuth: []
+      summary: "Create a new employee"
+      description: "Add a new employee to the system."
+      tags: ["Employee"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Employee"
+      responses:
+        "201":
+          description: "Employee created successfully."
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ServerErrorSchema"
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  statusCode:
+                    type: integer
+                    example: 201
+                  message:
+                    type: string
+                    example: "Employee created successfully."
+                  links:
+                    type: object
+                    additionalProperties: true
+                  data:
+                    $ref: "#/components/schemas/Employee"
+                required:
+                  - first_name
+                  - last_name
+                  - phone_number
+                  - date_of_birth
+                  - address
+                  - city
+                  - state
+                  - country
+                  - zip_code
+                  - date_of_hire
+                  - position
+                  - department
+                  - salary
+                  - employment_status
+
+        "400":
+          $ref: "#/components/responses/400"
+        "500":
+          $ref: "#/components/responses/500"
+  /employees/{id}:
+    get:
+      security:
+        - bearerAuth: []
+      summary: "Get employee details"
+      description: "Retrieve detailed information for a specific employee."
+      tags: [Employee]
+      parameters:
+        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/populate"
+      responses:
+        "200":
+          description: "Employee details"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: "Employee details retrieved successfully."
+                  links:
+                    type: object
+                    additionalProperties: true
+                  data:
+                    $ref: "#/components/schemas/Employee"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+
+    put:
+      security:
+        - bearerAuth: []
+      summary: Create or update an employee
+      tags: [Employee]
+      parameters:
+        - $ref: "#/components/parameters/id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Employee"
+      responses:
+        "200":
+          description: Employee updated successfully
+        "400":
+          $ref: "#/components/responses/400"
+        "404":
+          $ref: "#/components/responses/404"
+
+    patch:
+      security:
+        - bearerAuth: []
+      summary: "Partially update employee details"
+      tags: [Employee]
+      parameters:
+        - $ref: "#/components/parameters/id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Employee"
+      responses:
+        "200":
+          description: Employee updated successfully
+        "400":
+          $ref: "#/components/responses/400"
+        "404":
+          $ref: "#/components/responses/404"
+
+    delete:
+      security:
+        - bearerAuth: []
+      summary: "Delete employee"
+      tags: [Employee]
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "204":
+          description: Employee deleted successfully
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+
+  /employees/user/{id}:
+    get:
+      security:
+        - bearerAuth: []
+      summary: "Get employee by userId"
+      description: "Retrieve employee details associated with a specific userId."
+      tags: [Employee]
+      parameters:
+        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/populate"
+      responses:
+        "200":
+          description: "Employee details retrieved successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  statusCode:
+                    type: integer
+                    example: 200
+                  message:
+                    type: string
+                    example: "Employee details retrieved successfully."
+                  links:
+                    type: object
+                    additionalProperties: true
+                  data:
+                    $ref: "#/components/schemas/Employee"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+
+  /departments:
+    get:
+      tags:
+        - Department
+      summary: Get all departments
+      responses:
+        "200":
+          description: A list of departments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Department"
+
+    post:
+      tags:
+        - Department
+      summary: Create a new department
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Department"
+      responses:
+        "201":
+          description: Department created successfully
+        "400":
+          $ref: "#/components/responses/400"
+
+  /departments/{id}:
+    get:
+      tags:
+        - Department
+      summary: Get a department by ID
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "200":
+          description: Department details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Department"
+        "404":
+          $ref: "#/components/responses/404"
+
+    put:
+      tags:
+        - Department
+      summary: Update a department
+      parameters:
+        - $ref: "#/components/parameters/id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Department"
+      responses:
+        "200":
+          description: Department updated successfully
+        "400":
+          $ref: "#/components/responses/400"
+        "404":
+          $ref: "#/components/responses/404"
+
+    delete:
+      tags:
+        - Department
+      summary: Delete a department
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "204":
+          description: Department deleted successfully
+        "404":
+          $ref: "#/components/responses/404"
+
+  /projects:
+    get:
+      tags:
+        - Project
+      summary: Get all projects
+      responses:
+        "200":
+          description: A list of projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Project"
+
+    post:
+      tags:
+        - Project
+      summary: Create a new project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Project"
+      responses:
+        "201":
+          description: Project created successfully
+        "400":
+          $ref: "#/components/responses/400"
+
+  /projects/{id}:
+    get:
+      tags:
+        - Project
+      summary: Get a project by ID
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "200":
+          description: Project details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+        "404":
+          $ref: "#/components/responses/404"
+
+    put:
+      tags:
+        - Project
+      summary: Update a project
+      parameters:
+        - $ref: "#/components/parameters/id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Project"
+      responses:
+        "200":
+          description: Project updated successfully
+        "400":
+          $ref: "#/components/responses/400"
+        "404":
+          $ref: "#/components/responses/404"
+
+    delete:
+      tags:
+        - Project
+      summary: Delete a project
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "204":
+          description: Project deleted successfully
+        "404":
+          $ref: "#/components/responses/404"
+
+  /tasks:
+    get:
+      tags:
+        - Task
+      summary: Get all tasks
+      responses:
+        "200":
+          description: A list of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+
+    post:
+      tags:
+        - Task
+      summary: Create a new task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Task"
+      responses:
+        "201":
+          description: Task created successfully
+        "400":
+          $ref: "#/components/responses/400"
+
+  /tasks/{id}:
+    get:
+      tags:
+        - Task
+      summary: Get a task by ID
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "200":
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        404:
+          $ref: "#/components/responses/404"
+
+    put:
+      tags:
+        - Task
+      summary: Update a task
+      parameters:
+        - $ref: "#/components/parameters/id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Task"
+      responses:
+        200:
+          description: Task updated successfully
+        400:
+          $ref: "#/components/responses/400"
+        404:
+          $ref: "#/components/responses/404"
+
+    delete:
+      tags:
+        - Task
+      summary: Delete a task
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "204":
+          description: Task deleted successfully
+        "404":
+          $ref: "#/components/responses/404"
+
+  /attendances:
+    get:
+      tags:
+        - Attendance
+      summary: Get all attendance records
+      responses:
+        "200":
+          description: A list of attendance records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Attendance"
+
+    post:
+      tags:
+        - Attendance
+      summary: Create a new attendance record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Attendance"
+      responses:
+        "201":
+          description: Attendance record created successfully
+        "400":
+          $ref: "#/components/responses/400"
+
+  /attendances/{id}:
+    get:
+      tags:
+        - Attendance
+      summary: Get an attendance record by ID
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "200":
+          description: Attendance record details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Attendance"
+        "404":
+          $ref: "#/components/responses/404"
+
+    put:
+      tags:
+        - Attendance
+      summary: Update an attendance record
+      parameters:
+        - $ref: "#/components/parameters/id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Attendance"
+      responses:
+        "200":
+          description: Attendance record updated successfully
+        "404":
+          $ref: "#/components/responses/404"
+        "400":
+          $ref: "#/components/responses/400"
+
+    delete:
+      tags:
+        - Attendance
+      summary: Delete an attendance record
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "204":
+          description: Attendance record deleted successfully
+        "404":
+          $ref: "#/components/responses/404"
+
+  /leaves:
+    get:
+      tags:
+        - Leave
+      summary: Get all leave requests
+      responses:
+        "200":
+          description: A list of leave requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Leave"
+
+    post:
+      tags:
+        - Leave
+      summary: Create a new leave request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Leave"
+      responses:
+        "201":
+          description: Leave request created successfully
+        "400":
+          $ref: "#/components/responses/400"
+
+  /leaves/{id}:
+    get:
+      tags:
+        - Leave
+      summary: Get a leave request by ID
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "200":
+          description: Leave request details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Leave"
+        "404":
+          $ref: "#/components/responses/404"
+
+    put:
+      tags:
+        - Leave
+      summary: Update a leave request
+      parameters:
+        - $ref: "#/components/parameters/id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Leave"
+      responses:
+        "200":
+          description: Leave request updated successfully
+        "400":
+          $ref: "#/components/responses/400"
+        "404":
+          $ref: "#/components/responses/404"
+
+    delete:
+      tags:
+        - Leave
+      summary: Delete a leave request
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "204":
+          description: Leave request deleted successfully
+        "404":
+          $ref: "#/components/responses/404"
+
+  /reviews:
+    get:
+      tags:
+        - Review
+      summary: Get all performance reviews
+      responses:
+        "200":
+          description: A list of performance reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Review"
+
+    post:
+      tags:
+        - Review
+      summary: Create a new performance review
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Review"
+      responses:
+        "201":
+          description: Performance review created successfully
+        "400":
+          $ref: "#/components/responses/400"
+
+  /reviews/{id}:
+    get:
+      tags:
+        - Review
+      summary: Get a performance review by ID
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "200":
+          description: Performance review details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+        "404":
+          $ref: "#/components/responses/404"
+
+    put:
+      tags:
+        - Review
+      summary: Update a performance review
+      parameters:
+        - $ref: "#/components/parameters/id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Review"
+      responses:
+        "200":
+          description: Performance review updated successfully
+        "404":
+          $ref: "#/components/responses/404"
+        "400":
+          $ref: "#/components/responses/400"
+
+    delete:
+      tags:
+        - Review
+      summary: Delete a performance review
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "204":
+          description: Performance review deleted successfully
+        "404":
+          $ref: "#/components/responses/404"
+
+  /payrolls:
+    get:
+      tags:
+        - Payroll
+      summary: Get all payroll records
+      responses:
+        "200":
+          description: A list of payroll records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Payroll"
+
+    post:
+      tags:
+        - Payroll
+      summary: Create a new payroll record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Payroll"
+      responses:
+        "201":
+          description: Payroll record created successfully
+        "400":
+          $ref: "#/components/responses/400"
+
+  /payrolls/{id}:
+    get:
+      tags:
+        - Payroll
+      summary: Get a payroll record by ID
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "200":
+          description: Payroll record details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payroll"
+        "404":
+          $ref: "#/components/responses/404"
+
+    put:
+      tags:
+        - Payroll
+      summary: Update a payroll record
+      parameters:
+        - $ref: "#/components/parameters/id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Payroll"
+      responses:
+        "200":
+          description: Payroll record updated successfully
+        "404":
+          $ref: "#/components/responses/404"
+        "400":
+          $ref: "#/components/responses/400"
+
+    delete:
+      tags:
+        - Payroll
+      summary: Delete a payroll record
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        "204":
+          description: Payroll record deleted successfully
+        "404":
+          $ref: "#/components/responses/404"
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
-    BadRequestSchema:
+    User:
       type: object
       properties:
-        error:
+        username:
           type: string
-          description: Error message
-          example: 'PATH: [author] ;; MESSAGE: "author" is required'
-      required:
-        - error
-    ServerErrorSchema:
-      type: object
-      properties:
-        error:
+          example: new-user
+          minLength: 3
+          maxLength: 30
+          description: "Unique username with 3 to 30 characters."
+        email:
           type: string
-          description: Error message
-          example: Internal server error
-      required:
-        - error
-    NotFoundErrorSchema:
-      type: object
-      properties:
-        error:
+          example: newuser@example.com
+          format: email
+          description: "Unique email address in lowercase."
+        password:
           type: string
-          description: Error message
-          example: Item not found
-      required:
-        - error
-    DraftBookSchema:
+          example: yourPassword
+          minLength: 8
+          description: "Password with a minimum length of 8 characters."
+        role:
+          type: string
+          example: "63f9a33c8dfaa245d8f8b2e3"
+          description: "ObjectId reference to a Role."
+        permissions:
+          type: array
+          items:
+            type: string
+            example: "63f9a33c8dfaa245d8f8b2e4"
+          description: "Array of ObjectId references to Permissions."
+        status:
+          type: string
+          enum: ["Active", "Inactive", "Suspended", "OnLeave", "Pending"]
+          default: "Pending"
+          description: "Current status of the user."
+
+    Role:
       type: object
       properties:
+        role_id:
+          type: integer
         name:
           type: string
-          description: Name of the book
-          example: The Hitchhiker's Guide to the Galaxy
-        author:
+        description:
           type: string
-          description: Name of the author
-          example: Douglas Adams
-      required:
-        - name
-        - author
-    BookSchema:
-      allOf:
-        - $ref: "#/components/schemas/DraftBookSchema"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Permission:
       type: object
       properties:
-        _id:
+        resource:
           type: string
-          description: MongoDB id of the document
-          example: 5d7224d3b40b1a1a046697dd
-        createdAt:
-          type: number
-          description: Created at timestamp in miliseconds
-          example: 1616158942428
-        updatedAt:
-          type: number
-          description: Updated at timestamp in miliseconds
-          example: 1616158942428
+          description: The name of the resource.
+          example: "user"
+        action:
+          type: string
+          description: The action associated with the resource.
+          enum: ["read", "create", "update", "delete"]
+          example: "read"
+        description:
+          type: string
+          description: Optional description of the permission.
+          example: "Permission to read user data."
       required:
-        - _id
-        - createdAt
-        - updatedAt
+        - resource
+        - action
+      additionalProperties: false
+
+    RolePermission:
+      type: object
+      properties:
+        role:
+          type: string
+          description: The ObjectId of the associated role.
+          example: "610d1b2e3a2b0f3d2c0f8a1c"
+        permission:
+          type: string
+          description: The ObjectId of the associated permission.
+          example: "610d1b2e3a2b0f3d2c0f8a1b"
+      required:
+        - role
+        - permission
+      additionalProperties: false
+
+    Employee:
+      type: object
+      properties:
+        first_name:
+          type: string
+          example: "John"
+        last_name:
+          type: string
+          example: "Doe"
+        phone_number:
+          type: string
+          example: "+1234567890"
+        date_of_birth:
+          type: string
+          format: date
+          example: "2024-11-01T10:30:00.000Z"
+        address:
+          type: string
+          example: "123 Main St"
+        city:
+          type: string
+          example: "AnyTown"
+        state:
+          type: string
+          example: "AnyState"
+        country:
+          type: string
+          example: "Country"
+        zip_code:
+          type: string
+          example: "12345"
+        date_of_hire:
+          type: string
+          format: date
+          example: "2024-11-01T10:30:00.000Z"
+        job_title:
+          type: string
+          example: "Software Engineer"
+        department:
+          type: object
+          properties:
+            department_id:
+              type: string
+              example: "2"
+        manager:
+          type: object
+          properties:
+            manager_id:
+              type: string
+              example: "3"
+        position:
+          type: object
+          properties:
+            position_id:
+              type: string
+              example: "4"
+        salary:
+          type: number
+          format: double
+          example: 80000
+        employment_status:
+          type: string
+          example: "Active"
+        skills:
+          type: array
+          items:
+            type: string
+            example: "JavaScript"
+        certifications:
+          type: array
+          items:
+            type: string
+            example: "AWS Certified Developer"
+        profile_picture:
+          type: string
+          example: "http://example.com/profile.jpg"
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-10-29T10:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2024-10-29T10:00:00Z"
+
+    Payroll:
+      type: object
+      properties:
+        payroll_id:
+          type: integer
+        employee_id:
+          type: integer
+        salary_date:
+          type: string
+          format: date
+        gross_salary:
+          type: number
+          format: float
+        tax_deduction:
+          type: number
+          format: float
+        net_salary:
+          type: number
+          format: float
+        status:
+          type: string
+          enum: [Paid, Pending]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        employee_id:
+          type: integer
+          example: 1
+        review_date:
+          type: string
+          format: date
+          example: "2024-01-15"
+        feedback:
+          type: string
+          example: "Great job on the recent project."
+
+    Leave:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        employee_id:
+          type: integer
+          example: 1
+        start_date:
+          type: string
+          format: date
+          example: "2024-01-01"
+        end_date:
+          type: string
+          format: date
+          example: "2024-01-05"
+        reason:
+          type: string
+          example: "Sick leave"
+
+    Attendance:
+      type: object
+      properties:
+        attendance_id:
+          type: integer
+        employee_id:
+          type: integer
+        date:
+          type: string
+          format: date
+        check_in_time:
+          type: string
+          format: time
+        check_out_time:
+          type: string
+          format: time
+        status:
+          type: string
+          enum: [Present, Absent, On Leave]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        project_id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: "Task One"
+        description:
+          type: string
+          example: "A brief description of the task."
+        status:
+          type: string
+          enum:
+            - "pending"
+            - "in_progress"
+            - "completed"
+          example: "pending"
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Project Alpha"
+        description:
+          type: string
+          example: "A brief description of the project."
+        start_date:
+          type: string
+          format: date
+          example: "2024-01-01"
+        end_date:
+          type: string
+          format: date
+          example: "2024-12-31"
+
+    Department:
+      type: object
+      properties:
+        department_id:
+          type: integer
+        department_name:
+          type: string
+        location:
+          type: string
+        manager_id:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+  parameters:
+    id:
+      in: path
+      name: id
+      required: true
+      description: The ID of the resource
+      schema:
+        type: string
+    search:
+      in: query
+      name: search
+      description: Search term
+      schema:
+        type: string
+        example: ""
+    page:
+      in: query
+      name: page
+      description: Current page number
+      schema:
+        type: integer
+        format: int32
+        example: 1
+    limit:
+      in: query
+      name: limit
+      description: Maximum items to be returned
+      schema:
+        type: integer
+        format: int32
+        example: 5
+    sort_type:
+      in: query
+      name: sort_type
+      description: Type of sort (asc or desc)
+      schema:
+        type: string
+        enum: [asc, desc]
+        example: desc
+    sort_by:
+      in: query
+      name: sort_by
+      description: Sort key
+      schema:
+        type: string
+        example: updatedAt
+    populate:
+      in: query
+      name: populate
+      description: populate related property
+      schema:
+        type: string
+        example: ""
+    role:
+      in: query
+      name: role
+      description: role related property
+      schema:
+        type: string
+        example: ""
+
+  responses:
+    "400":
+      description: Bad Request Error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: "error"
+              statusCode:
+                type: integer
+                example: 400
+              error:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "BAD_REQUEST"
+                  message:
+                    type: string
+                    example: "Bad request"
+                  details:
+                    type: object
+                    additionalProperties:
+                      type: string
+                  timestamp:
+                    type: string
+                    example: "2024-11-01T12:34:56Z"
+                  path:
+                    type: string
+                    example: "/api/v1/resource"
+                  suggestion:
+                    type: string
+                    example: "Please check your request and try again."
+    "401":
+      description: Unauthorized Error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: "error"
+              statusCode:
+                type: integer
+                example: 401
+              error:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNAUTHORIZED"
+                  message:
+                    type: string
+                    example: "Unauthorized access"
+                  details:
+                    type: object
+                    additionalProperties:
+                      type: string
+                  timestamp:
+                    type: string
+                    example: "2024-11-01T12:34:56Z"
+                  path:
+                    type: string
+                    example: "/api/v1/protected-resource"
+                  suggestion:
+                    type: string
+                    example: "Please login to access this resource."
+    "403":
+      description: Forbidden Error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: "error"
+              statusCode:
+                type: integer
+                example: 403
+              error:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "FORBIDDEN"
+                  message:
+                    type: string
+                    example: "Forbidden access"
+                  details:
+                    type: object
+                    additionalProperties:
+                      type: string
+                  timestamp:
+                    type: string
+                    example: "2024-11-01T12:34:56Z"
+                  path:
+                    type: string
+                    example: "/api/v1/restricted-resource"
+                  suggestion:
+                    type: string
+                    example: "Check your permissions and try again."
+    "404":
+      description: Not Found Error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: "error"
+              statusCode:
+                type: integer
+                example: 404
+              error:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "NOT_FOUND"
+                  message:
+                    type: string
+                    example: "Resource not found"
+                  details:
+                    type: object
+                    additionalProperties:
+                      type: string
+                  timestamp:
+                    type: string
+                    example: "2024-11-01T12:34:56Z"
+                  path:
+                    type: string
+                    example: "/api/v1/non-existent-resource"
+                  suggestion:
+                    type: string
+                    example: "Ensure the resource ID is correct."
+    "409":
+      description: Conflict Error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: "error"
+              statusCode:
+                type: integer
+                example: 409
+              error:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "CONFLICT"
+                  message:
+                    type: string
+                    example: "Conflict occurred while processing the request"
+                  details:
+                    type: object
+                    additionalProperties:
+                      type: string
+                  timestamp:
+                    type: string
+                    example: "2024-11-01T12:34:56Z"
+                  path:
+                    type: string
+                    example: "/api/v1/resource"
+                  suggestion:
+                    type: string
+                    example: "Try a different resource or modify your request."
+    "415":
+      description: Unsupported Media Type Error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: "error"
+              statusCode:
+                type: integer
+                example: 415
+              error:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "UNSUPPORTED_MEDIA_TYPE"
+                  message:
+                    type: string
+                    example: "Unsupported media type"
+                  details:
+                    type: object
+                    additionalProperties:
+                      type: string
+                  timestamp:
+                    type: string
+                    example: "2024-11-01T12:34:56Z"
+                  path:
+                    type: string
+                    example: "/api/v1/resource"
+                  suggestion:
+                    type: string
+                    example: "Ensure the Content-Type is correct."
+    "500":
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: "error"
+              statusCode:
+                type: integer
+                example: 500
+              error:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "INTERNAL_SERVER_ERROR"
+                  message:
+                    type: string
+                    example: "Internal server error"
+                  details:
+                    type: object
+                    additionalProperties:
+                      type: string
+                  timestamp:
+                    type: string
+                    example: "2024-11-01T12:34:56Z"
+                  path:
+                    type: string
+                    example: "/api/v1/some-resource"
+                  suggestion:
+                    type: string
+                    example: "Please try again later."
