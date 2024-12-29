@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { ZodError } from "zod";
-import { ErrorDetails, ErrorResponse } from "../types/error";
+import { ErrorResponse } from "../types/error";
 
 /**
  * Utility function to handle Zod validation errors and send a consistent response.
@@ -13,18 +13,16 @@ export const handleZodValidationError = (
   res: Response,
   validationType: "body" | "query" | "params"
 ) => {
-  const errorDetails: ErrorDetails = {
-    code: "VALIDATION_ERROR",
-    message: error.message,
-    details: error.issues,
-    suggestion: `Please check your ${validationType} data and try again.`,
-  };
-
   const errorResponse: ErrorResponse = {
     status: "error",
     statusCode: 400,
-    error: errorDetails,
-    timestamp: new Date().toISOString(),
+    error: {
+      code: "VALIDATION_ERROR",
+      message: error.message,
+      details: error.issues,
+      suggestion: `Please check your ${validationType} data and try again.`,
+      timestamp: new Date().toISOString(),
+    },
   };
 
   res.status(400).json(errorResponse);

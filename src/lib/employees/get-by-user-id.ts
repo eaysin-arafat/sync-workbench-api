@@ -1,8 +1,8 @@
 // utils/employeeUtils.ts
 
+import NotFoundError from "@/errors/not-found-error";
 import Employee from "@/models/Employee";
 import { IdWithPopulateType } from "@/types/quert";
-import { generateErrorResponse, notFoundError } from "@/utils";
 
 const getByUserId = async ({ id, populate }: IdWithPopulateType) => {
   const query = Employee.findOne({ user: id });
@@ -11,8 +11,7 @@ const getByUserId = async ({ id, populate }: IdWithPopulateType) => {
   const employee = await query;
 
   if (!employee) {
-    throw generateErrorResponse({
-      ...notFoundError,
+    throw new NotFoundError({
       message: `Employee not found for user with ID ${id}`,
     });
   }

@@ -1,5 +1,5 @@
+import AuthenticationError from "@/errors/authentication-error";
 import { verifyToken } from "@/lib/tokens";
-import { authenticationError, generateErrorResponse } from "@/utils";
 import { NextFunction, Request, Response } from "express";
 
 export const authenticateJWT = (
@@ -10,10 +10,9 @@ export const authenticateJWT = (
   const token = req.headers.authorization?.split(" ")[1];
 
   if (!token) {
-    const errorPayload = generateErrorResponse({
-      ...authenticationError,
+    const errorPayload = new AuthenticationError({
       message: "Access denied. No token provided.",
-    });
+    }).toErrorResponse();
 
     return res.status(errorPayload.statusCode).json(errorPayload);
   }
@@ -24,10 +23,9 @@ export const authenticateJWT = (
 
     next();
   } catch (error) {
-    const errorPayload = generateErrorResponse({
-      ...authenticationError,
+    const errorPayload = new AuthenticationError({
       message: "Invalid token or token has expired.",
-    });
+    }).toErrorResponse();
 
     return res.status(errorPayload?.statusCode).json(errorPayload);
   }

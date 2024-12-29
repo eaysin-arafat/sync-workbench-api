@@ -1,9 +1,10 @@
+import AuthorizationError from "@/errors/authorization-error";
+import BadRequest from "@/errors/bad-request-error";
+import NotFoundError from "@/errors/not-found-error";
 import { IPermission } from "@/models/Permission";
 import { RolePermission } from "@/models/RolePermission";
 import User from "@/models/User";
-import { authorizationError, generateErrorResponse } from "@/utils";
 import { NextFunction, Request, Response } from "express";
-import { badRequest, notFoundError } from "./../utils/errors";
 
 const httpMethodToActionMap: { [key: string]: string } = {
   GET: "read",
@@ -17,25 +18,23 @@ const authorization = () => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user?.id;
-      if (!userId) throw generateErrorResponse(authorizationError);
+      if (!userId) throw new AuthorizationError().toErrorResponse();
 
       const user = await User.findById(userId).populate("role");
-      if (!user) throw generateErrorResponse(notFoundError);
+      if (!user) throw new NotFoundError().toErrorResponse();
 
       const resource = req.baseUrl.split("/").pop();
       if (!resource)
-        throw generateErrorResponse({
-          ...badRequest,
+        throw new BadRequest({
           message: "Resource not specified.",
-        });
+        }).toErrorResponse();
 
       const httpMethod = req.method.toUpperCase();
       const action = httpMethodToActionMap[httpMethod];
       if (!action)
-        throw generateErrorResponse({
-          ...badRequest,
+        throw new BadRequest({
           message: "Unsupported action.",
-        });
+        }).toErrorResponse();
 
       const rolePermissions = await RolePermission.find({
         role: user.role,
@@ -48,14 +47,13 @@ const authorization = () => {
       });
 
       if (!hasPermission)
-        throw generateErrorResponse({
-          ...authorizationError,
+        throw new AuthorizationError({
           message: `Access denied. You do not have permission to ${action} ${resource}.`,
-        });
+        }).toErrorResponse();
 
       next();
     } catch (error) {
-      res.status(500).json({ message: "Authorization error", error });
+      res.status(500).json(error);
     }
   };
 };

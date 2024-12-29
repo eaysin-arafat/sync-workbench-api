@@ -1,7 +1,7 @@
+import NotFoundError from "@/errors/not-found-error";
 import { Permission } from "@/models/Permission";
 import { PermissionSchemaType } from "@/schemas/permission";
 import { IdSchemaType } from "@/schemas/shared/id";
-import { generateErrorResponse, notFoundError } from "@/utils";
 
 const partialUpdate = async (
   id: IdSchemaType,
@@ -10,7 +10,7 @@ const partialUpdate = async (
   const { action, resource, description } = payload;
 
   const permission = await Permission.findById(id);
-  if (!permission) generateErrorResponse(notFoundError);
+  if (!permission) throw new NotFoundError();
 
   permission?.set({ action, resource, description });
   await permission?.save();

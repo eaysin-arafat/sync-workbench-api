@@ -1,8 +1,5 @@
-import {
-  authenticationError,
-  generateErrorResponse,
-  internalServerError,
-} from "@/utils";
+import AuthenticationError from "@/errors/authentication-error";
+import InternalServerError from "@/errors/internal-server-error";
 import dotenv from "dotenv";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { AccessTokenPayload, RefreshTokenPayload } from "./types";
@@ -42,7 +39,7 @@ const generateToken = ({
     });
   } catch (error) {
     console.log("[JWT]", error);
-    throw generateErrorResponse(internalServerError);
+    throw new InternalServerError();
   }
 };
 
@@ -56,7 +53,7 @@ const decodeToken = ({ token }: DecodeTokenOptions): JwtPayload | null => {
     return jwt.decode(token) as JwtPayload | null;
   } catch (error) {
     console.log("[JWT]", error);
-    throw generateErrorResponse(authenticationError);
+    throw new AuthenticationError();
   }
 };
 
@@ -82,7 +79,7 @@ const verifyToken = ({
       | RefreshTokenPayload;
   } catch (error) {
     console.log("[JWT]", error);
-    throw generateErrorResponse(authenticationError);
+    throw new AuthenticationError();
   }
 };
 

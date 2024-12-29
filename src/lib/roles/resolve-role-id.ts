@@ -1,5 +1,5 @@
+import NotFoundError from "@/errors/not-found-error";
 import { Role } from "@/models/Role";
-import { generateErrorResponse, notFoundError } from "@/utils/errors";
 import mongoose from "mongoose";
 
 /**
@@ -16,7 +16,7 @@ export const resolveRoleId = async (
     name: { $regex: new RegExp(`^${roleName}$`, "i") },
   }).select("_id");
 
-  if (!roleDoc) throw generateErrorResponse(notFoundError);
+  if (!roleDoc) throw new NotFoundError();
 
   return roleDoc._id as mongoose.Types.ObjectId;
 };

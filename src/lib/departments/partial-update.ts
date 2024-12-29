@@ -1,8 +1,8 @@
 // lib/partialUpdateEmployee.ts
+import NotFoundError from "@/errors/not-found-error";
 import Employee from "@/models/Employee";
 import { EmployeeSchemaType } from "@/schemas/employee";
 import { IdSchemaType } from "@/schemas/shared/id";
-import { generateErrorResponse, notFoundError } from "@/utils";
 
 const partialUpdate = async (id: IdSchemaType, data: EmployeeSchemaType) => {
   const {
@@ -28,7 +28,7 @@ const partialUpdate = async (id: IdSchemaType, data: EmployeeSchemaType) => {
   } = data;
   const employee = await Employee.findById(id);
 
-  if (!employee) generateErrorResponse(notFoundError);
+  if (!employee) throw new NotFoundError();
 
   employee?.set({
     address,

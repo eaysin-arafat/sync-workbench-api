@@ -1,14 +1,15 @@
-import { authenticationError, generateErrorResponse } from "@/utils";
+import AuthenticationError from "@/errors/authentication-error";
 import { generateToken, verifyToken } from "../tokens";
 import { findUserById } from "../users";
 
 const refreshToken = async (refreshToken: string) => {
   const payload = verifyToken({ type: "RefreshToken", token: refreshToken });
 
-  if (!payload || !payload.id) throw generateErrorResponse(authenticationError);
+  if (!payload || !payload.id)
+    throw new AuthenticationError().toErrorResponse();
 
   const user = await findUserById(payload.id);
-  if (!user) throw generateErrorResponse(authenticationError);
+  if (!user) throw new AuthenticationError().toErrorResponse();
 
   const { id, email, username, status, role } = user;
 

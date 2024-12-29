@@ -1,10 +1,10 @@
+import NotFoundError from "@/errors/not-found-error";
 import { Permission } from "@/models/Permission";
 import { IdSchemaType } from "@/schemas/shared/id";
-import { generateErrorResponse, notFoundError } from "@/utils";
 
 const getById = async (id: IdSchemaType) => {
   const permission = await Permission.findById(id);
-  if (!permission) throw generateErrorResponse(notFoundError);
+  if (!permission) throw new NotFoundError();
 
   return { permission: permission.toObject() };
 };

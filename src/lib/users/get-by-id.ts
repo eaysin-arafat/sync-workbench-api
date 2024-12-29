@@ -1,6 +1,6 @@
+import NotFoundError from "@/errors/not-found-error";
 import User from "@/models/User";
 import { IdWithPopulateType } from "@/types/quert";
-import { generateErrorResponse, notFoundError } from "@/utils";
 
 const getById = async ({ id, populate }: IdWithPopulateType) => {
   const userQuery = User.findById(id).select("-password");
@@ -8,7 +8,7 @@ const getById = async ({ id, populate }: IdWithPopulateType) => {
   if (populate) userQuery.populate(populate);
 
   const user = await userQuery;
-  if (!user) throw generateErrorResponse(notFoundError);
+  if (!user) throw new NotFoundError();
 
   return { user: user.toObject() };
 };

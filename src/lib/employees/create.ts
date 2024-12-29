@@ -1,6 +1,7 @@
+import BadRequest from "@/errors/bad-request-error";
+import ConflictError from "@/errors/conflict-error";
 import Employee from "@/models/Employee";
 import { EmployeePartialSchemaType } from "@/schemas/employee";
-import { conflictError, generateErrorResponse } from "@/utils";
 import mongoose from "mongoose";
 
 const create = async (data: EmployeePartialSchemaType) => {
@@ -26,17 +27,10 @@ const create = async (data: EmployeePartialSchemaType) => {
     skills,
   } = data;
 
-  if (!user) {
-    throw generateErrorResponse({
-      message: "User ID is required",
-      statusCode: 400,
-      code: "USER_MISSING",
-    });
-  }
+  if (!user) throw new BadRequest();
 
   const existingEmployee = await Employee.findOne({ user: user });
-  if (existingEmployee)
-    throw generateErrorResponse(conflictError("employee", user));
+  if (existingEmployee) throw new ConflictError("employee", user);
 
   const employee = new Employee({
     user: new mongoose.Types.ObjectId(user),
@@ -66,8 +60,7 @@ const create = async (data: EmployeePartialSchemaType) => {
 
 const createEmptyEmployeeForUser = async (userId: string) => {
   const existingEmployee = await Employee.findOne({ user: userId });
-  if (existingEmployee)
-    throw generateErrorResponse(conflictError("employee", userId));
+  if (existingEmployee) throw new ConflictError("employee", userId);
 
   const employeeData: EmployeePartialSchemaType = {
     user: userId,

@@ -1,16 +1,22 @@
-import defaultConfig from "@/config/default";
+import ConflictError from "@/errors/conflict-error";
+import InternalServerError from "@/errors/internal-server-error";
 import User from "@/models/User";
 import { UserSchemaType } from "@/schemas/user";
-import { conflictError, generateErrorResponse } from "@/utils";
+import { Populate } from "@/types/quert";
 import {
   createEmptyEmployeeForUser,
   removeEmployeeByUserId,
 } from "../employees";
 
-const findUserByUsername = async (username: string) => {
-  const user = await User.findOne({ username }).populate(
-    defaultConfig?.allowedUserPopulateFields
-  );
+const findUserByUsername = async (username: string, populate?: Populate) => {
+  const query = User.findOne({ username });
+
+  if (populate) query.populate(populate);
+
+  const user = await query;
+
+  console.log(user);
+
   return user ? user : false;
 };
 
@@ -29,12 +35,11 @@ const createUser = async (data: UserSchemaType) => {
   const { email, password, role, username, status } = data;
 
   const existingEmailUser = await User.findOne({ email });
-  if (existingEmailUser)
-    throw generateErrorResponse(conflictError("user", `email: ${email}`));
+  if (existingEmailUser) throw new ConflictError("user", `email: ${email}`);
 
   const existingUsernameUser = await User.findOne({ username });
   if (existingUsernameUser)
-    throw generateErrorResponse(conflictError("user", `username: ${username}`));
+    throw new ConflictError("user", `username: ${username}`);
 
   try {
     const user = new User({ email, username, password, role, status });
@@ -46,7 +51,7 @@ const createUser = async (data: UserSchemaType) => {
       await user.save();
       return user.toObject();
     } catch (error) {
-      throw generateErrorResponse({
+      throw new InternalServerError({
         message: "Database error occurred",
         statusCode: 500,
         code: "ERROR",
@@ -64,7 +69,7 @@ const createUserWithEmployee = async (data: UserSchemaType) => {
 
     const userId = user._id;
     if (!userId)
-      throw generateErrorResponse({
+      throw new InternalServerError({
         message: "User ID not found after user creation",
         statusCode: 500,
         code: "ERROR",
@@ -85,7 +90,7 @@ const createUserWithEmployee = async (data: UserSchemaType) => {
     }
 
     console.log(error);
-    throw generateErrorResponse({
+    throw new InternalServerError({
       message: "Failed to create user and employee",
       statusCode: 500,
       code: "ERROR",

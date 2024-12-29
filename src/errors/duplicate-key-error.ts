@@ -1,4 +1,3 @@
-import { ErrorDetails } from "@/utils";
 import ApplicationError, { ErrorOptions } from "./application-error";
 
 export default class DuplicateKeyError extends ApplicationError {
@@ -9,7 +8,8 @@ export default class DuplicateKeyError extends ApplicationError {
   ) {
     const { message, details, suggestion } = options;
 
-    const defaultDetails: ErrorDetails = {
+    super({
+      statusCode: 409,
       code: "DUPLICATE_KEY_ERROR",
       message:
         message || `${resourceName} with the same ${keyName} already exists.`,
@@ -19,13 +19,6 @@ export default class DuplicateKeyError extends ApplicationError {
       suggestion:
         suggestion ||
         `Please ensure the ${keyName.toLowerCase()} is unique before trying again.`,
-    };
-
-    super({
-      message: message || `${resourceName} Duplicate Key Error`,
-      statusCode: 409,
-      details: defaultDetails.details,
-      suggestion: defaultDetails.suggestion,
     });
   }
 }

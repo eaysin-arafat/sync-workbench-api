@@ -1,6 +1,5 @@
-import ApplicationError from "@/errors/application-error";
+import BadRequest from "@/errors/bad-request-error";
 import { PopulateOptions } from "mongoose";
-import { badRequest } from "./errors";
 
 type PopulateInput = string | string[] | undefined;
 type PopulateOutput =
@@ -27,8 +26,7 @@ export const parsePopulate = (populate: PopulateInput): PopulateOutput => {
   }
 
   if (populate && typeof populate !== "string" && !Array.isArray(populate)) {
-    throw new ApplicationError({
-      ...badRequest,
+    throw new BadRequest({
       message:
         "Invalid populate format. Populate must be a string, an array, or undefined.",
     });

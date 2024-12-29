@@ -1,4 +1,4 @@
-import { ErrorDetails, ErrorResponse } from "@/types/error";
+import { ErrorResponse } from "@/types/error";
 import { formatValidationErrors } from "@/utils/formatted-message";
 import { ZodIssue } from "zod";
 
@@ -16,25 +16,18 @@ export default class ApplicationError extends Error {
   public statusCode: number;
   public details: string | ZodIssue[];
   public suggestion: string;
+  public documentation_url: string = "https://api.example.com/docs/errors";
 
   constructor(options: ErrorOptions = {}) {
     const { code, message, statusCode, details, suggestion } = options;
 
-    const defaultDetails: ErrorDetails = {
-      code: code || "INTERNAL_SERVER_ERROR",
-      message: message || "An error occurred.",
-      details: details || [],
-      suggestion: suggestion || "Please try again later.",
-    };
+    super(message || "An error occurred.");
 
-    super(message || defaultDetails.message);
-
-    this.code = defaultDetails.code;
-    this.message = defaultDetails.message;
+    this.code = code || "INTERNAL_SERVER_ERROR";
+    this.message = message || "An error occurred.";
     this.statusCode = statusCode || 500;
-    this.details = defaultDetails.details;
-    this.suggestion = defaultDetails.suggestion;
-    this.name = this.constructor.name;
+    this.details = details || [];
+    this.suggestion = suggestion || "Please try again later.";
   }
 
   toErrorResponse(
@@ -53,10 +46,10 @@ export default class ApplicationError extends Error {
         message: this.message,
         details: formattedMessage,
         suggestion: this.suggestion,
+        requestId: requestId || undefined,
+        documentation_url: documentationUrl || this.documentation_url,
+        timestamp: new Date().toISOString(),
       },
-      requestId,
-      documentation_url: documentationUrl,
-      timestamp: new Date().toISOString(),
     };
   }
 }

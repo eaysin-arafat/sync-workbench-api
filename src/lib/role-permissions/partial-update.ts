@@ -1,7 +1,7 @@
+import NotFoundError from "@/errors/not-found-error";
 import { RolePermission } from "@/models/RolePermission";
 import { RolePermissionSchemaType } from "@/schemas/role-permission";
 import { IdSchemaType } from "@/schemas/shared/id";
-import { generateErrorResponse, notFoundError } from "@/utils";
 
 const partialUpdate = async (
   id: IdSchemaType,
@@ -10,7 +10,7 @@ const partialUpdate = async (
   const { permission, role } = data;
   const rolePermission = await RolePermission.findById(id);
 
-  if (!rolePermission) generateErrorResponse(notFoundError);
+  if (!rolePermission) throw new NotFoundError();
 
   rolePermission?.set({ permission, role });
   await rolePermission?.save();

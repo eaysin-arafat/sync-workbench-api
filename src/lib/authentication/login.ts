@@ -1,5 +1,6 @@
+import BadRequest from "@/errors/bad-request-error";
 import { LoginSchemaType } from "@/schemas/auth";
-import { badRequest, generateErrorResponse, hashMatched } from "@/utils";
+import { hashMatched } from "@/utils";
 import { generateToken } from "../tokens";
 import { findUserByUsername } from "../users";
 
@@ -7,10 +8,11 @@ const login = async (data: LoginSchemaType) => {
   const { username, password } = data;
 
   const user = await findUserByUsername(username);
-  if (!user) throw generateErrorResponse(badRequest);
+  console.log({ user });
+  if (!user) throw new BadRequest().toErrorResponse();
 
   const matched = await hashMatched(password, user.password);
-  if (!matched) throw generateErrorResponse(badRequest);
+  if (!matched) throw new BadRequest().toErrorResponse();
 
   const tokenPayload = {
     id: user.id,

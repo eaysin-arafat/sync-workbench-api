@@ -8,7 +8,8 @@ export default class ResourceNotFoundError extends ApplicationError {
   ) {
     const { message, details, suggestion } = options;
 
-    const defaultDetails = {
+    super({
+      statusCode: 404,
       code: "RESOURCE_NOT_FOUND",
       message: message || `${resourceName} with ID ${resourceId} not found.`,
       details:
@@ -17,13 +18,6 @@ export default class ResourceNotFoundError extends ApplicationError {
       suggestion:
         suggestion ||
         `Please verify the ${resourceName.toLowerCase()} ID or check the resource status.`,
-    };
-
-    super({
-      message: message || `${resourceName} Not Found`,
-      statusCode: 404,
-      details: defaultDetails.details,
-      suggestion: defaultDetails.suggestion,
     });
   }
 }

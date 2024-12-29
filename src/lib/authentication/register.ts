@@ -1,5 +1,5 @@
+import ConflictError from "@/errors/conflict-error";
 import { UserSchemaType } from "@/schemas/user";
-import { conflictError, generateErrorResponse } from "@/utils/errors";
 import { generateHash } from "@/utils/hashing";
 import { generateToken } from "../tokens";
 import { userExist } from "../users";
@@ -10,8 +10,10 @@ const register = async (data: UserSchemaType) => {
 
   const hasUser = await userExist(username);
   if (hasUser)
-    throw generateErrorResponse({
-      ...conflictError("username", username),
+    throw new ConflictError("username", username, {
+      message: "Username already taken.",
+      details: `The username "${username}" is already in use.`,
+      suggestion: "Please choose a different username.",
     });
 
   const hashedPassword = await generateHash(password);

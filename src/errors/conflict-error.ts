@@ -8,7 +8,7 @@ export default class ConflictError extends ApplicationError {
   ) {
     const { message, details, suggestion } = options;
 
-    const defaultDetails = {
+    super({
       code: "RESOURCE_CONFLICT",
       message: message || `${resourceValue} already exists.`,
       details:
@@ -17,13 +17,7 @@ export default class ConflictError extends ApplicationError {
       suggestion:
         suggestion ||
         `Please use a unique ${resourceName.toLowerCase()} or check the resource for correctness.`,
-    };
-
-    super({
-      message: message || `${resourceValue} Duplicate Key Error`,
       statusCode: 409,
-      details: defaultDetails.details,
-      suggestion: defaultDetails.suggestion,
     });
   }
 }

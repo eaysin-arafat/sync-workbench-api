@@ -1,5 +1,5 @@
+import ResourceNotFoundError from "@/errors/resource-not-found-error";
 import { RolePermission } from "@/models/RolePermission";
-import { generateErrorResponse, resourceNotFoundError } from "@/utils";
 import {
   preparePagination,
   prepareSearchQuery,
@@ -17,11 +17,9 @@ const getAll = async (data: RolePermissionQuerySchemaType) => {
   );
 
   if (invalidExpendFields?.length > 0)
-    throw generateErrorResponse(
-      resourceNotFoundError(
-        invalidExpendFields.join(", "),
-        allowedExpendFields.join(", ")
-      )
+    throw new ResourceNotFoundError(
+      invalidExpendFields.join(", "),
+      allowedExpendFields.join(", ")
     );
 
   const sortOptions = prepareSortOptions(sort_by, sort_type);
