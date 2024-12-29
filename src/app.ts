@@ -1,39 +1,16 @@
-import logger from "@/logger";
+import ApplicationError from "@/errors/application-error";
 import { errorHandler } from "@/middleware/error-handler";
 import routes from "@/routes";
 import bodyParser from "body-parser";
 import compression from "compression";
 import cors from "cors";
-import express, { NextFunction, Request, Response } from "express";
+import express from "express";
 import path from "path";
+import { logResponseTime } from "./middleware/log-response-time";
 
 const app = express();
 
-const corsOptions = {
-  origin: "*",
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
-
-function logResponseTime(req: Request, res: Response, next: NextFunction) {
-  const startHrTime = process.hrtime();
-
-  res.on("finish", () => {
-    const elapsedHrTime = process.hrtime(startHrTime);
-    const elapsedTimeInMs = elapsedHrTime[0] * 1000 + elapsedHrTime[1] / 1e6;
-    const message = `${req.method} ${res.statusCode} ${elapsedTimeInMs}ms\t${req.path}`;
-    logger.log({
-      level: "debug",
-      message,
-      consoleLoggerOptions: { label: "API" },
-    });
-  });
-
-  next();
-}
-
-app.use(logResponseTime);
-app.use(cors(corsOptions));
+app.use(cors());
 app.use(compression() as any);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -52,6 +29,20 @@ app.get("/health", (_req, res) => {
     .json({ status: `${process.env.APPLICATION_NAME} service is up` });
 });
 
+// 404 Error Middleware
+app.use((_req, _res, next) => {
+  const error = new ApplicationError({
+    statusCode: 404,
+    message: "The requested resource was not found.",
+    code: "NOT_FOUND",
+    suggestion: "Check the URL or contact support if the issue persists.",
+  });
+  next(error);
+});
+
+app.use(logResponseTime);
+
+// Error Handler
 app.use(errorHandler);
 
 export default app;
