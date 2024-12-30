@@ -31,7 +31,7 @@ const defaultMongooseConnectionOptions: ConnectOptions = {
  *
  * This library tries to auto-reconnect to
  * MongoDB without crashing the server.
- * @author Sidhant Panda
+ * @author Eaysin Arafat
  */
 export default class SafeMongooseConnection {
   /** Safe Mongoose Connection options */

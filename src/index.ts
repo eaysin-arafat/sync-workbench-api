@@ -4,9 +4,9 @@ const result = dotenv.config();
 if (result.error) dotenv.config({ path: ".env.default" });
 
 import app from "@/app";
-import SafeMongooseConnection from "@/lib/safe-mongoose-connection";
 import logger from "@/logger";
 import util from "util";
+import SafeMongooseConnection from "./database/safe-mongoose-connection";
 
 const PORT = process.env.PORT || 4000;
 

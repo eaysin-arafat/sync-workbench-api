@@ -18,23 +18,23 @@ const authorization = () => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user?.id;
-      if (!userId) throw new AuthorizationError().toErrorResponse();
+      if (!userId) throw new AuthorizationError();
 
       const user = await User.findById(userId).populate("role");
-      if (!user) throw new NotFoundError().toErrorResponse();
+      if (!user) throw new NotFoundError();
 
       const resource = req.baseUrl.split("/").pop();
       if (!resource)
         throw new BadRequest({
           message: "Resource not specified.",
-        }).toErrorResponse();
+        });
 
       const httpMethod = req.method.toUpperCase();
       const action = httpMethodToActionMap[httpMethod];
       if (!action)
         throw new BadRequest({
           message: "Unsupported action.",
-        }).toErrorResponse();
+        });
 
       const rolePermissions = await RolePermission.find({
         role: user.role,
@@ -49,11 +49,13 @@ const authorization = () => {
       if (!hasPermission)
         throw new AuthorizationError({
           message: `Access denied. You do not have permission to ${action} ${resource}.`,
-        }).toErrorResponse();
+        });
 
       next();
-    } catch (error) {
-      res.status(500).json(error);
+    } catch (error: any) {
+      res
+        .status(500)
+        .json({ status: "error", statusCode: error?.statusCode || 500, error });
     }
   };
 };

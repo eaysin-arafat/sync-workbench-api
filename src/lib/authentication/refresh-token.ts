@@ -5,11 +5,10 @@ import { findUserById } from "../users";
 const refreshToken = async (refreshToken: string) => {
   const payload = verifyToken({ type: "RefreshToken", token: refreshToken });
 
-  if (!payload || !payload.id)
-    throw new AuthenticationError().toErrorResponse();
+  if (!payload || !payload.id) throw new AuthenticationError();
 
   const user = await findUserById(payload.id);
-  if (!user) throw new AuthenticationError().toErrorResponse();
+  if (!user) throw new AuthenticationError();
 
   const { id, email, username, status, role } = user;
 

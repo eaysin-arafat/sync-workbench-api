@@ -10,12 +10,10 @@ import {
 
 const findUserByUsername = async (username: string, populate?: Populate) => {
   const query = User.findOne({ username });
-
   if (populate) query.populate(populate);
 
   const user = await query;
-
-  console.log(user);
+  console.log(user, "==============");
 
   return user ? user : false;
 };

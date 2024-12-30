@@ -9,10 +9,20 @@ const login = async (data: LoginSchemaType) => {
 
   const user = await findUserByUsername(username);
   console.log({ user });
-  if (!user) throw new BadRequest().toErrorResponse();
+  if (!user)
+    throw new BadRequest({
+      message: "Invalid credentials provided.",
+      details: "The username or password is incorrect.",
+      suggestion: "Please check your username and password and try again.",
+    });
 
   const matched = await hashMatched(password, user.password);
-  if (!matched) throw new BadRequest().toErrorResponse();
+  if (!matched)
+    throw new BadRequest({
+      message: "Invalid credentials provided.",
+      details: "The username or password is incorrect.",
+      suggestion: "Please check your username and password and try again.",
+    });
 
   const tokenPayload = {
     id: user.id,

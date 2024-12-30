@@ -3,7 +3,7 @@ const defaultConfig = Object.freeze({
     "/api/v1/auth/login",
     "/api/v1/auth/register",
     "/api/v1/auth/refresh-token",
-    "/docs",
+    "/dev/api-docs/",
   ],
   allowUserRoles: ["hr", "admin", "manager", "employee"],
   allowedUserPopulateFields: ["role"],

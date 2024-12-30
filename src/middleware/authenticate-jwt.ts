@@ -12,7 +12,7 @@ export const authenticateJWT = (
   if (!token) {
     const errorPayload = new AuthenticationError({
       message: "Access denied. No token provided.",
-    }).toErrorResponse();
+    });
 
     return res.status(errorPayload.statusCode).json(errorPayload);
   }
