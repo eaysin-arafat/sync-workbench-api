@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { errorHandler } from "@/middleware/error-handler";
 import routes from "@/routes";
 import bodyParser from "body-parser";
@@ -42,7 +43,7 @@ const swaggerUiOptions = {
 };
 const SWAGGER_YAML_FILEPATH = path.join(__dirname, "../openapi.yml");
 
-if (process.env.NODE_ENV === "development") {
+if (env.NODE_ENV === "development") {
   const swaggerYaml = yaml.load(
     fs.readFileSync(SWAGGER_YAML_FILEPATH, "utf8")
   ) as object;
@@ -60,9 +61,7 @@ app.get("/", (_req, res) => {
 
 // Health check endpoint
 app.get("/health", (_req, res) => {
-  res
-    .status(200)
-    .json({ status: `${process.env.APPLICATION_NAME} service is up` });
+  res.status(200).json({ status: `${env.APPLICATION_NAME} service is up` });
 });
 
 // 404 Error handler for unknown routes

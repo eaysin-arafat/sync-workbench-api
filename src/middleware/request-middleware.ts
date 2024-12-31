@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { handleZodValidationError } from "@/utils/handle-zod-validation-error";
 import { NextFunction, Request, RequestHandler, Response } from "express";
 import { ZodError, ZodSchema } from "zod";
@@ -60,7 +61,7 @@ export const requestMiddleware =
     try {
       await handler(req, res, next);
     } catch (err) {
-      if (process.env.NODE_ENV === "development") {
+      if (env.NODE_ENV === "development") {
         logger.log({
           level: "error",
           message: "Error in request handler",

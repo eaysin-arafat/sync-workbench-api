@@ -1,3 +1,5 @@
+import { env } from "@/env";
+
 import { createLogger, format, transports } from "winston";
 import ConsoleLoggerTransport from "./lib/winston-console-transport";
 
@@ -24,7 +26,7 @@ const logger = createLogger({
   format: format.combine(format.timestamp()),
   transports: logTransports,
   defaultMeta: { service: "api" },
-  level: process.env.NODE_ENV === "development" ? "silly" : "info",
+  level: env.NODE_ENV === "development" ? "silly" : "info",
 });
 
 export default logger;

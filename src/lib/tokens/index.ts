@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import AuthenticationError from "@/errors/authentication-error";
 import InternalServerError from "@/errors/internal-server-error";
 import dotenv from "dotenv";
@@ -6,12 +7,11 @@ import { AccessTokenPayload, RefreshTokenPayload } from "./types";
 
 dotenv.config();
 
-const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET || "access-secret";
-const REFRESH_TOKEN_SECRET =
-  process.env.REFRESH_TOKEN_SECRET || "refresh-secret";
+const ACCESS_TOKEN_SECRET = env.ACCESS_TOKEN_SECRET || "access-secret";
+const REFRESH_TOKEN_SECRET = env.REFRESH_TOKEN_SECRET || "refresh-secret";
 
-const ACCESS_TOKEN_EXPIRATION = process.env.ACCESS_TOKEN_EXPIRATION || "15m";
-const REFRESH_TOKEN_EXPIRATION = process.env.REFRESH_TOKEN_EXPIRATION || "7d";
+const ACCESS_TOKEN_EXPIRATION = env.ACCESS_TOKEN_EXPIRATION || "15m";
+const REFRESH_TOKEN_EXPIRATION = env.REFRESH_TOKEN_EXPIRATION || "7d";
 
 interface GenerateTokenOptions {
   type: "AccessToken" | "RefreshToken";

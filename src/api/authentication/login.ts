@@ -26,8 +26,6 @@ const login: RequestHandler = async (
       password,
     });
 
-    console.log({ accessToken, refreshToken });
-
     const response = {
       status: "success",
       statusCode: 200,

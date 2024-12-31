@@ -13,8 +13,6 @@ const findUserByUsername = async (username: string, populate?: Populate) => {
   if (populate) query.populate(populate);
 
   const user = await query;
-  console.log(user, "==============");
-
   return user ? user : false;
 };
 
@@ -87,7 +85,6 @@ const createUserWithEmployee = async (data: UserSchemaType) => {
       await removeEmployeeByUserId(userId);
     }
 
-    console.log(error);
     throw new InternalServerError({
       message: "Failed to create user and employee",
       statusCode: 500,

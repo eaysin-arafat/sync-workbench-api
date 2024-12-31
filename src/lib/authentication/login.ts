@@ -8,7 +8,6 @@ const login = async (data: LoginSchemaType) => {
   const { username, password } = data;
 
   const user = await findUserByUsername(username);
-  console.log({ user });
   if (!user)
     throw new BadRequest({
       message: "Invalid credentials provided.",
