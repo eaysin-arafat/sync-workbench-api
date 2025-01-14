@@ -21,7 +21,7 @@ const register = async (
 
     const response = {
       status: "success",
-      statusCode: 200,
+      statusCode: 201,
       message: "Login successful",
       data: { accessToken, refreshToken },
     };
